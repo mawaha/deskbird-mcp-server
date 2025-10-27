@@ -46,7 +46,7 @@
     "registry": "https://npm.pkg.github.com"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.17.5",
+    "@modelcontextprotocol/sdk": "^1.20.2",
     "dotenv-flow": "^4.1.0",
     "luxon": "^3.7.2"
   },
