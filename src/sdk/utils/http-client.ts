@@ -94,13 +94,9 @@ export class HttpClient {
         },
       };
 
-      if (!response.ok) {
-        console.error(`[HTTP Client] API Error (${response.status}):`, responseData);
-      }
-
       return apiResponse;
     } catch (fetchError) {
-      console.error('[HTTP Client] Network/Fetch Error:', fetchError);
+      // Error details are captured in the response object
       
       return {
         success: false,

@@ -21,7 +21,6 @@ export class SchedulingApi {
     all?: boolean;
     favorites?: boolean;
   }): Promise<any> {
-    console.error('[Scheduling API] Getting staff planning for:', params.startDate);
 
     try {
       const queryParams = new URLSearchParams();

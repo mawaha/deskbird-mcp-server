@@ -186,7 +186,6 @@ export class DeskbirdSdk {
       return this.cachedCompanyId;
     }
 
-    console.error('[Deskbird SDK] Getting company ID');
 
     await this.ensureAccessToken();
 
@@ -252,7 +251,6 @@ export class DeskbirdSdk {
    * Get all available desks (convenience method)
    */
   async getAvailableDesks() {
-    console.error('[Deskbird SDK] Getting all available desks');
 
     const { workspaceId, groupId } = await this.getWorkspaceConfig();
     return this.workspaces.getAvailableDesks(workspaceId, groupId);

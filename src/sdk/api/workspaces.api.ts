@@ -64,8 +64,6 @@ export class WorkspacesApi {
    * Get internal workspaces for a company
    */
   async getInternalWorkspaces(companyId: string): Promise<InternalWorkspacesResponse> {
-    console.error(`[Workspaces API] Getting internal workspaces for company: ${companyId}`);
-    
     try {
       // Build URL with query parameters
       const baseEndpoint = getVersionedEndpoint('WORKSPACES_INTERNAL', '/company/internalWorkspaces');
@@ -76,11 +74,11 @@ export class WorkspacesApi {
       const fullPath = `${baseEndpoint}?${queryParams.toString()}`;
 
       const response = await this.client.get<InternalWorkspacesResponse>(fullPath);
-      
+
       if (!response.success || !response.data) {
         throw new Error(`Failed to get internal workspaces: ${response.status} ${response.statusText}`);
       }
-      
+
       return response.data;
     } catch (error: unknown) {
       handleDeskbirdException(error, 'getInternalWorkspaces');
@@ -91,17 +89,15 @@ export class WorkspacesApi {
    * Get groups for a workspace
    */
   async getWorkspaceGroups(workspaceId: string): Promise<WorkspaceGroupsResponse> {
-    console.error(`[Workspaces API] Getting groups for workspace: ${workspaceId}`);
-    
     try {
       const response = await this.client.get<WorkspaceGroupsResponse>(
         getVersionedEndpoint('WORKSPACE_GROUPS', `/company/internalWorkspaces/${workspaceId}/groups`)
       );
-      
+
       if (!response.success || !response.data) {
         throw new Error(`Failed to get workspace groups: ${response.status} ${response.statusText}`);
       }
-      
+
       return response.data;
     } catch (error: unknown) {
       handleDeskbirdException(error, 'getWorkspaceGroups');
@@ -112,17 +108,15 @@ export class WorkspacesApi {
    * Get floor configuration for a workspace group
    */
   async getFloorConfig(workspaceId: string, groupId: string): Promise<FloorConfigResponse> {
-    console.error(`[Workspaces API] Getting floor config for workspace ${workspaceId}, group ${groupId}`);
-    
     try {
       const response = await this.client.get<FloorConfigResponse>(
         getVersionedEndpoint('WORKSPACE_FLOOR_CONFIG', `/company/internalWorkspaces/${workspaceId}/groups/${groupId}/floorConfig`)
       );
-      
+
       if (!response.success || !response.data) {
         throw new Error(`Failed to get floor config: ${response.status} ${response.statusText}`);
       }
-      
+
       return response.data;
     } catch (error: unknown) {
       handleDeskbirdException(error, 'getFloorConfig');
@@ -133,8 +127,6 @@ export class WorkspacesApi {
    * Parse floor configuration and extract desk information
    */
   parseFloorConfig(floorConfigJson: string): DeskInfo[] {
-    console.error('[Workspaces API] Parsing floor configuration');
-    
     try {
       const floorConfig = JSON.parse(floorConfigJson);
       const allDesks: DeskInfo[] = [];
@@ -171,7 +163,6 @@ export class WorkspacesApi {
 
       return allDesks;
     } catch (error) {
-      console.error('[Workspaces API] Error parsing floor config:', error);
       throw new Error('Failed to parse floor configuration JSON');
     }
   }
@@ -180,15 +171,13 @@ export class WorkspacesApi {
    * Get all available desks with parsed information
    */
   async getAvailableDesks(workspaceId: string, groupId: string): Promise<DeskInfo[]> {
-    console.error(`[Workspaces API] Getting available desks for workspace ${workspaceId}, group ${groupId}`);
-    
     try {
       const floorConfigResponse = await this.getFloorConfig(workspaceId, groupId);
-      
+
       if (!floorConfigResponse.data?.floorConfig) {
         throw new Error('No floor configuration data received');
       }
-      
+
       return this.parseFloorConfig(floorConfigResponse.data.floorConfig);
     } catch (error: unknown) {
       handleDeskbirdException(error, 'getAvailableDesks');
@@ -199,21 +188,16 @@ export class WorkspacesApi {
    * Find zone ID for a desk by desk number
    */
   async findDeskZoneId(deskNumber: number, workspaceId: string, groupId: string): Promise<number | null> {
-    console.error(`[Workspaces API] Finding zone ID for desk number: ${deskNumber}`);
-    
     try {
       const desks = await this.getAvailableDesks(workspaceId, groupId);
       const desk = desks.find(d => d.deskNumber === deskNumber);
-      
+
       if (desk) {
-        console.error(`Found desk ${deskNumber} with zoneId ${desk.zoneId} and title "${desk.title}"`);
         return parseInt(desk.zoneId);
       }
-      
-      console.warn(`Desk ${deskNumber} not found in floor config`);
+
       return null;
     } catch (error: unknown) {
-      console.error('Error looking up desk zone ID:', error);
       return null;
     }
   }
@@ -222,21 +206,16 @@ export class WorkspacesApi {
    * Auto-discover workspace ID from user data or company workspaces
    */
   async discoverWorkspaceId(userApi: any, companyId?: string): Promise<string> {
-    console.error('[Workspaces API] Auto-discovering workspace ID');
-    
     try {
       // Strategy 1: Get from user's primary office
       const userData = await userApi.getCurrentUser();
       if (userData.primaryOfficeId) {
-        console.error(`Using workspace ID from user's primary office: ${userData.primaryOfficeId}`);
         return userData.primaryOfficeId;
       }
 
       // Strategy 2: Get first accessible office
       if (userData.accessibleOfficeIds && userData.accessibleOfficeIds.length > 0) {
-        const workspaceId = userData.accessibleOfficeIds[0];
-        console.error(`Using first accessible workspace ID: ${workspaceId}`);
-        return workspaceId;
+        return userData.accessibleOfficeIds[0];
       }
 
       // Strategy 3: Discover from company workspaces
@@ -246,7 +225,6 @@ export class WorkspacesApi {
         const activeWorkspace = workspacesData.results?.find(ws => ws.isActive && !ws.isClosed);
 
         if (activeWorkspace?.id) {
-          console.error(`Discovered active workspace ID: ${activeWorkspace.id} (${activeWorkspace.name})`);
           return activeWorkspace.id;
         }
       }
@@ -261,15 +239,11 @@ export class WorkspacesApi {
    * Auto-discover group ID for a workspace
    */
   async discoverGroupId(workspaceId: string, userApi: any): Promise<string> {
-    console.error(`[Workspaces API] Auto-discovering group ID for workspace: ${workspaceId}`);
-    
     try {
       // Strategy 1: Try to derive it from user's favorite resources
       const userData = await userApi.getCurrentUser();
       if (userData.favoriteResources && userData.favoriteResources.length > 0) {
-        const groupId = userData.favoriteResources[0].groupId;
-        console.error(`Derived group ID ${groupId} from user's favorite resources`);
-        return groupId;
+        return userData.favoriteResources[0].groupId;
       }
 
       // Strategy 2: Try to discover groups for this workspace
@@ -280,7 +254,6 @@ export class WorkspacesApi {
       ) || groupsData.results?.[0]; // fallback to first group
 
       if (activeGroup) {
-        console.error(`Discovered group ID ${activeGroup.id} from workspace groups`);
         return activeGroup.id;
       }
 

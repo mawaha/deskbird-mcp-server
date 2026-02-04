@@ -29,8 +29,6 @@ export class DeskbirdApiError extends Error implements BusinessExceptionError {
  * Similar to the Omni Administration SDK's error handling pattern.
  */
 export function handleDeskbirdException(error: unknown, context?: string): never {
-  console.error(`[Deskbird SDK] Error in ${context || 'API call'}:`, error);
-
   if (error instanceof DeskbirdApiError) {
     throw error;
   }

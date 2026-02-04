@@ -364,7 +364,6 @@ export class DeskbirdMcpServer {
     const enablePreviewTools = process.env.ENABLE_PREVIEW_TOOLS === 'true' || process.env.ENABLE_PREVIEW_TOOLS === '1';
 
     if (enablePreviewTools) {
-      console.error('Preview tools enabled: deskbird_api_call tool is available');
       return [...coreTools, DESKBIRD_API_CALL_TOOL];
     } else {
       return coreTools;

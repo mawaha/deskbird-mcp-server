@@ -43,7 +43,6 @@ export class UserApi {
    * Get current user information
    */
   async getCurrentUser(): Promise<UserResponse> {
-    console.error('[User API] Getting current user information');
 
     try {
       const response = await this.client.get<UserResponse>(
@@ -64,7 +63,6 @@ export class UserApi {
    * Get user's favorite resources
    */
   async getUserFavorites(): Promise<FavoriteResource[]> {
-    console.error('[User API] Getting user favorite resources');
 
     try {
       const userData = await this.getCurrentUser();
@@ -112,7 +110,6 @@ export class UserApi {
       externalProvider: string;
     };
   }> {
-    console.error('[User API] Getting user profile summary');
 
     try {
       const userData = await this.getCurrentUser();
@@ -169,7 +166,6 @@ export class UserApi {
     sortOrder?: 'ASC' | 'DESC';
     excludeUserIds?: string;
   }): Promise<UserSearchResponse> {
-    console.error('[User API] Searching users with query:', params.searchQuery);
 
     try {
       // Build query parameters
@@ -205,7 +201,6 @@ export class UserApi {
    * Get detailed user information by user ID
    */
   async getUserById(userId: string): Promise<UserDetails> {
-    console.error('[User API] Getting user details for ID:', userId);
 
     try {
       // We will always return the full profile, so no ?basicInfo query param
@@ -227,7 +222,6 @@ export class UserApi {
    * Send a follow request to a user
    */
   async followUser(userId: string): Promise<any> {
-    console.error('[User API] Sending follow request to user ID:', userId);
 
     try {
       const response = await this.client.post(
@@ -249,7 +243,6 @@ export class UserApi {
    * Unfollow a user
    */
   async unfollowUser(userId: string): Promise<any> {
-    console.error('[User API] Unfollowing user ID:', userId);
 
     try {
       const response = await this.client.delete(
