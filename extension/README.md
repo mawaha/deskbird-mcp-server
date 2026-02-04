@@ -134,10 +134,19 @@ Try refreshing the Deskbird page and clicking the extension again.
 
 ## Security & Privacy
 
-- **100% Local**: All processing happens in your browser. Nothing is sent to external servers.
-- **Open Source**: You can inspect the code to verify what it does.
-- **Minimal Permissions**: Only requests access to Deskbird domains.
-- **No Tracking**: No analytics, no data collection.
+**Important Security Notice**: This extension captures authentication credentials from your browser. While this is its intended purpose (to help you configure the MCP server), you should understand what it does:
+
+- **Credential Access**: The extension reads your Deskbird refresh token and API keys
+- **Network Interception**: It monitors requests to Google's authentication API to capture tokens
+- **Local Storage Only**: Captured credentials are stored only in your browser's local extension storage
+- **No External Transmission**: Nothing is sent to external servers - all processing is 100% local
+- **Open Source**: You can inspect the code to verify exactly what it does
+
+**Recommendations**:
+- Only install this extension if you trust the source
+- Review the code before installing if you have concerns
+- Uninstall the extension after extracting your credentials if you prefer
+- The extension only activates on `*.deskbird.com` domains
 
 ---
 
