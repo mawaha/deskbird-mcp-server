@@ -6,10 +6,12 @@ A Model Context Protocol (MCP) server for Deskbird desk booking integration. Thi
 
 - [Features](#features)
 - [Installation](#installation)
-- [Configuration](#configuration) 
+- [Getting Your Credentials](#getting-your-credentials)
+- [Configuration](#configuration)
 - [Usage](#usage)
 - [Available Tools](#available-tools)
 - [How it Works](#how-it-works)
+- [Troubleshooting](#troubleshooting)
 - [Requirements](#requirements)
 - [Deskbird SDK (For Developers)](#deskbird-sdk-for-developers)
 - [API Endpoints Reference](#api-endpoints-reference)
@@ -17,45 +19,101 @@ A Model Context Protocol (MCP) server for Deskbird desk booking integration. Thi
 
 ## Features
 
-- 📅 **Desk Booking**: Book office desks for specific dates with automatic date validation
-- 🏢 **Workspace Management**: Access workspace and zone-specific booking with auto-discovery
-- ⭐ **Favorites Management**: Add/remove desks to/from favorites by desk number
-- 👥 **User Management**: Search users, get user details, and profile information
-- 🔧 **Configurable**: Environment-based configuration with sensible defaults
-- 🚀 **Modern Stack**: Built with TypeScript, MCP SDK, and comprehensive Deskbird SDK
-- 🛡️ **Error Handling**: Comprehensive error handling with business exception support
-- 🌐 **API Versioning**: Intelligent API versioning with endpoint-specific version selection
+- Desk Booking: Book office desks for specific dates with automatic date validation
+- Workspace Management: Access workspace and zone-specific booking with auto-discovery
+- Favorites Management: Add/remove desks to/from favorites by desk number
+- User Management: Search users, get user details, and profile information
+- Configurable: Environment-based configuration with sensible defaults
+- Modern Stack: Built with TypeScript, MCP SDK, and comprehensive Deskbird SDK
+- Error Handling: Comprehensive error handling with business exception support
+- API Versioning: Intelligent API versioning with endpoint-specific version selection
 
 ## Installation
 
 ### From GitHub Packages
 
 ```bash
-npm install -g @mschilling/deskbird-mcp-server
+npm install -g @mawaha/deskbird-mcp-server
 ```
 
-### From Source
+### From Source (Recommended for Development)
 
 ```bash
-git clone https://github.com/mschilling/deskbird-mcp-server.git
+git clone https://github.com/mawaha/deskbird-mcp-server.git
 cd deskbird-mcp-server
 npm install
 npm run build
+npm run setup --local
 ```
+
+## Getting Your Credentials
+
+This server requires credentials from your Deskbird account. Here's how to obtain them:
+
+### REFRESH_TOKEN and GOOGLE_API_KEY
+
+These are used for OAuth authentication with Deskbird:
+
+1. **Open Deskbird in your browser** and log in at https://app.deskbird.com
+2. **Open Developer Tools** (F12 or Cmd+Option+I)
+3. **Go to the Network tab** and filter by "token"
+4. **Refresh the page** or perform any action
+5. **Find a request to `securetoken.googleapis.com`**
+6. **In the request payload**, you'll find:
+   - `refresh_token` - Copy this as your `REFRESH_TOKEN`
+7. **In the request URL**, you'll find:
+   - `key=` parameter - Copy this as your `GOOGLE_API_KEY`
+
+Alternatively, check the Application tab > Local Storage > `app.deskbird.com` for stored tokens.
+
+### DESKBIRD_WORKSPACE_ID, DESKBIRD_ZONE_ITEM_ID, DESKBIRD_RESOURCE_ID
+
+These IDs identify your office location:
+
+1. **Navigate to your office floor plan** in the Deskbird web app
+2. **Check the URL** - it contains IDs like:
+   ```
+   https://app.deskbird.com/office/123/floor/456/zone/789
+   ```
+   - `123` = Workspace ID
+   - `456` = Floor/Resource ID
+   - `789` = Zone Item ID
+
+3. **Alternatively**, use the MCP inspector after setting up authentication:
+   ```bash
+   npm run inspector
+   ```
+   Then call `deskbird_get_user_info` to see your workspace details.
+
+### Verifying Your Credentials
+
+After setting up your `.env` file, verify everything works:
+
+```bash
+npm run verify
+```
+
+This will test your authentication and show any configuration issues.
 
 ## Configuration
 
 ### Quick Setup
 
-After installation, run the setup helper to generate configuration files:
+After installation, run the setup helper:
 
 ```bash
+# Interactive mode - prompts for local vs npm
 npm run setup
+
+# Or specify mode directly:
+npm run setup -- --local   # For development (uses local dist/main.js)
+npm run setup -- --npm     # For end users (uses npx)
 ```
 
-This will create:
-- `.env.example` - Environment configuration template  
+This creates:
+- `.env.example` - Environment configuration template
 - `claude_desktop_config.json` - Claude Desktop configuration
+- `claude_code_config.json` - Claude Code CLI configuration
 - `vscode_mcp_config.json` - VS Code MCP configuration
 
 ### Manual Configuration
@@ -77,6 +135,69 @@ DESKBIRD_WORKSPACE_ID=your_workspace_id
 DEFAULT_COMPANY_ID=your_company_id  # Optional: If not set, will be auto-discovered from user profile
 ENABLE_PREVIEW_TOOLS=false  # Optional: Set to 'true' to enable preview tools like deskbird_api_call
 ```
+
+### Client Configuration Examples
+
+**For Local Development** (recommended when working on the server):
+
+Claude Desktop (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+```json
+{
+  "mcpServers": {
+    "deskbird": {
+      "command": "node",
+      "args": ["/path/to/deskbird-mcp-server/dist/main.js"],
+      "env": {
+        "ENABLE_PREVIEW_TOOLS": "false"
+      }
+    }
+  }
+}
+```
+
+**For NPM Package** (for end users):
+
+Claude Desktop:
+```json
+{
+  "mcpServers": {
+    "deskbird": {
+      "command": "npx",
+      "args": ["-y", "@mawaha/deskbird-mcp-server"],
+      "env": {
+        "ENABLE_PREVIEW_TOOLS": "false"
+      }
+    }
+  }
+}
+```
+
+VS Code (`.vscode/mcp.json` or settings.json):
+```json
+{
+  "mcp": {
+    "servers": {
+      "deskbird": {
+        "command": "npx",
+        "args": ["-y", "@mawaha/deskbird-mcp-server"],
+        "env": {
+          "ENABLE_PREVIEW_TOOLS": "false"
+        }
+      }
+    }
+  }
+}
+```
+
+### Client Config File Locations
+
+| Client | Location |
+|--------|----------|
+| Claude Desktop (macOS) | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Claude Desktop (Windows) | `%APPDATA%\Claude\claude_desktop_config.json` |
+| Claude Desktop (Linux) | `~/.config/Claude/claude_desktop_config.json` |
+| Claude Code CLI | `~/.claude.json` (global) or `.claude.json` (project) |
+| VS Code | `.vscode/mcp.json` or in VS Code settings.json |
 
 ### Dynamic Company ID Resolution
 
@@ -102,40 +223,6 @@ The MCP server includes preview tools (like `deskbird_api_call`) that provide di
 - Use with caution in production settings
 - Consider API rate limits and data validation when using direct API access
 
-**Configuration Examples:**
-
-For Claude Desktop (`claude_desktop_config.json`):
-```json
-{
-  "mcpServers": {
-    "deskbird": {
-      "command": "npx",
-      "args": ["-y", "@mschilling/deskbird-mcp-server"],
-      "env": {
-        "ENABLE_PREVIEW_TOOLS": "true"
-      }
-    }
-  }
-}
-```
-
-For VS Code (`vscode_mcp_config.json`):
-```json
-{
-  "mcp": {
-    "servers": {
-      "deskbird": {
-        "command": "npx", 
-        "args": ["-y", "@mschilling/deskbird-mcp-server"],
-        "env": {
-          "ENABLE_PREVIEW_TOOLS": "true"
-        }
-      }
-    }
-  }
-}
-```
-
 ## Usage
 
 ### Build and Run
@@ -151,31 +238,43 @@ npm start
 npm run dev
 ```
 
+### Verify Configuration
+
+```bash
+npm run verify
+```
+
+### Debug with MCP Inspector
+
+```bash
+npm run inspector
+```
+
 ## Available Tools
 
 The MCP server provides 10 tools that interact with various Deskbird API endpoints. Each tool is designed for specific use cases while the `deskbird_api_call` tool provides direct API access for advanced scenarios.
 
 ### Overview of Tools by Category
 
-#### 🏢 **Desk Management**
+#### Desk Management
 - [`deskbird_book_desk`](#deskbird_book_desk) - Book a specific desk for a date
 - [`deskbird_get_available_desks`](#deskbird_get_available_desks) - List all available desks
 
-#### ⭐ **Favorites Management**  
+#### Favorites Management
 - [`deskbird_favorite_desk`](#deskbird_favorite_desk) - Add desk to favorites
 - [`deskbird_unfavorite_desk`](#deskbird_unfavorite_desk) - Remove desk from favorites
 - [`deskbird_get_user_favorites`](#deskbird_get_user_favorites) - Get user's favorite desks
 
-#### 📅 **Booking Management**
+#### Booking Management
 - [`deskbird_get_user_bookings`](#deskbird_get_user_bookings) - Get user's current bookings
 
-#### 👥 **User Management**
+#### User Management
 - [`deskbird_get_user_info`](#deskbird_get_user_info) - Get current user profile
 - [`deskbird_search_users`](#deskbird_search_users) - Search for users in company
 - [`deskbird_get_user_details`](#deskbird_get_user_details) - Get detailed user information
 
-#### 🔧 **Advanced/Debug**
-- [`deskbird_api_call`](#deskbird_api_call-️-preview-tool) - Direct API access (Preview Tool, requires `ENABLE_PREVIEW_TOOLS=true`)
+#### Advanced/Debug
+- [`deskbird_api_call`](#deskbird_api_call-preview-tool) - Direct API access (Preview Tool, requires `ENABLE_PREVIEW_TOOLS=true`)
 
 ### `deskbird_book_desk`
 
@@ -264,15 +363,15 @@ Get detailed information about a specific user by their user ID.
 }
 ```
 
-### `deskbird_api_call` ⚠️ PREVIEW TOOL
+### `deskbird_api_call` (Preview Tool)
 
 Execute any HTTP request to the Deskbird API with full control over path, method, headers, and body. This tool provides direct access to the Deskbird API for advanced users, debugging, and accessing endpoints not covered by dedicated tools.
 
-**⚠️ Prerequisites**: This tool must be explicitly enabled by setting `ENABLE_PREVIEW_TOOLS=true` in your environment configuration. It is disabled by default for security reasons.
+**Prerequisites**: This tool must be explicitly enabled by setting `ENABLE_PREVIEW_TOOLS=true` in your environment configuration. It is disabled by default for security reasons.
 
-**⚠️ Security and Usage Considerations:**
+**Security and Usage Considerations:**
 - This tool provides unrestricted access to the Deskbird API
-- Use only if you understand the API structure and potential consequences  
+- Use only if you understand the API structure and potential consequences
 - Be mindful of API rate limits and data validation
 - For production use, prefer dedicated tools when available
 
@@ -342,7 +441,7 @@ Create a guest booking:
 Update an existing booking:
 ```json
 {
-  "method": "PATCH", 
+  "method": "PATCH",
   "path": "/bookings/12345",
   "body": {
     "bookingId": "12345",
@@ -391,6 +490,69 @@ The Deskbird MCP Server integrates multiple layers to provide seamless desk book
 - **Desk Resolution**: Converts user-friendly desk numbers to internal zone IDs
 - **API Versioning**: Automatically selects appropriate API version for each endpoint
 
+## Troubleshooting
+
+### "Unexpected token" errors in Claude Desktop
+
+This usually means the server is outputting non-JSON data to stdout. Common causes:
+- Using `console.log()` in the code (use the custom logger instead)
+- Missing or invalid environment variables
+
+**Fix**: Run `npm run verify` to check your configuration, then restart Claude Desktop.
+
+### Authentication failures
+
+If you see authentication errors:
+
+1. **Check credentials are set**:
+   ```bash
+   npm run verify
+   ```
+
+2. **Refresh token may have expired**:
+   - Log into Deskbird web app again
+   - Extract new `REFRESH_TOKEN` from Network tab (see [Getting Your Credentials](#getting-your-credentials))
+
+3. **Google API key invalid**:
+   - Ensure you copied the full `key=` parameter from the token request URL
+
+### Server not appearing in Claude Desktop
+
+1. **Restart Claude Desktop** after changing config
+2. **Check JSON syntax**:
+   ```bash
+   cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | jq .
+   ```
+3. **Verify the path** in your config points to the correct location
+4. **Check logs**: Look for errors in Claude Desktop's developer console
+
+### "Missing required environment variables" error
+
+The server validates `REFRESH_TOKEN` and `GOOGLE_API_KEY` at startup:
+
+1. Ensure `.env` file exists in the project root
+2. Verify values are not placeholders (don't start with `your_`)
+3. Run `npm run verify` to test configuration
+
+### Cannot find workspace/zone IDs
+
+Use the MCP inspector to discover your IDs:
+
+```bash
+npm run inspector
+```
+
+Then call:
+- `deskbird_get_user_info` - Shows your default workspace
+- `deskbird_get_available_desks` - Lists all desks with their IDs
+
+### Rate limiting or API errors
+
+The Deskbird API has rate limits. If you see 429 errors:
+- Reduce frequency of requests
+- Add delays between bulk operations
+- Check if `deskbird_api_call` is being overused
+
 ## Requirements
 
 - **Node.js 22+** (see `.nvmrc` for exact version)
@@ -406,6 +568,9 @@ npm install
 
 # Build the project
 npm run build
+
+# Verify configuration
+npm run verify
 
 # Run in development mode
 npm run dev
@@ -424,12 +589,12 @@ The project uses TypeScript and compiles to the `dist/` directory. No automated 
 The Deskbird SDK is a standalone TypeScript library designed for direct integration with the Deskbird API. It provides a clean, type-safe, and extensible architecture with features like automatic token refresh, comprehensive error handling, and date utilities.
 
 **Key SDK Features:**
-- 🏗️ **Modular Architecture**: Separate API clients for auth, bookings, user, favorites, and workspaces
-- 🔐 **Authentication Management**: Automatic OAuth token refresh
-- 🛡️ **Error Handling**: Business exception handling with structured error responses  
-- 📅 **Date Utilities**: Built-in date validation and timezone support
-- 🎯 **Production Ready**: Optimized for third-party API consumers
-- 📦 **Factory Pattern**: Easy client creation with `createDeskbirdClient()`
+- Modular Architecture: Separate API clients for auth, bookings, user, favorites, and workspaces
+- Authentication Management: Automatic OAuth token refresh
+- Error Handling: Business exception handling with structured error responses
+- Date Utilities: Built-in date validation and timezone support
+- Production Ready: Optimized for third-party API consumers
+- Factory Pattern: Easy client creation with `createDeskbirdClient()`
 
 If you are a developer looking to integrate with the Deskbird API directly in your application, you can find detailed documentation, installation instructions, and API references in the [SDK's dedicated README file](src/sdk/README.md).
 
@@ -471,4 +636,6 @@ ISC License - see [LICENSE](LICENSE) file for details.
 
 ## Author
 
-[@mschilling](https://github.com/mschilling)
+[@mawaha](https://github.com/mawaha)
+
+Forked from [@mschilling](https://github.com/mschilling/deskbird-mcp-server)
