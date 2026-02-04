@@ -1,8 +1,10 @@
 /**
  * Deskbird MCP Credentials Helper - Popup Script
  *
- * This script extracts credentials from the Deskbird web app
- * to make it easy to configure the MCP server.
+ * Uses a hybrid approach for maximum reliability:
+ * 1. Primary: Get credentials captured by background worker (network interception)
+ * 2. Fallback: Scrape localStorage from the page (Firebase auth data)
+ * 3. URL parsing: Extract workspace IDs from current page URL
  */
 
 // DOM Elements
@@ -26,8 +28,7 @@ const elements = {
   retry: document.getElementById('retry'),
 };
 
-// Known Google API key used by Deskbird (Firebase)
-// This is a public API key embedded in their web app
+// Known Google API key used by Deskbird (Firebase) - fallback
 const KNOWN_GOOGLE_API_KEY = 'AIzaSyAtEWbXaOGuGd5FIn0lx8yHsm-vM9bMdfs';
 
 // State
@@ -52,7 +53,23 @@ function showError(message) {
 }
 
 /**
- * Extract credentials from the page
+ * Get credentials from background worker (captured via network interception)
+ */
+async function getCredentialsFromBackground() {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage({ type: 'GET_CREDENTIALS' }, (response) => {
+      if (chrome.runtime.lastError) {
+        console.warn('[Popup] Background worker error:', chrome.runtime.lastError);
+        resolve(null);
+        return;
+      }
+      resolve(response?.credentials || null);
+    });
+  });
+}
+
+/**
+ * Extract credentials from the page's localStorage (fallback method)
  * This runs in the context of the Deskbird page
  */
 function extractCredentialsFromPage() {
@@ -65,10 +82,8 @@ function extractCredentialsFromPage() {
     userEmail: null,
   };
 
-  // Try to extract from localStorage
-  // Deskbird uses Firebase Auth which stores tokens in localStorage
+  // Try to extract from localStorage (Firebase Auth pattern)
   try {
-    // Look for Firebase auth data
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       const value = localStorage.getItem(key);
@@ -108,21 +123,16 @@ function extractCredentialsFromPage() {
   }
 
   // Extract IDs from URL
-  // URL patterns:
-  // /home/workspace/{workspaceId}/...
-  // /office/{workspaceId}/floor/{resourceId}/zone/{zoneId}
-  // /booking/workspace/{workspaceId}/resource/{resourceId}/zone/{zoneId}
   try {
-    const url = window.location.href;
     const pathname = window.location.pathname;
 
-    // Try different URL patterns
-    const patterns = [
+    // Workspace ID patterns
+    const workspacePatterns = [
       /\/workspace\/(\d+)/,
       /\/office\/(\d+)/,
+      /\/workspaces\/(\d+)/,
     ];
-
-    for (const pattern of patterns) {
+    for (const pattern of workspacePatterns) {
       const match = pathname.match(pattern);
       if (match) {
         credentials.workspaceId = match[1];
@@ -130,12 +140,13 @@ function extractCredentialsFromPage() {
       }
     }
 
-    // Resource/Floor ID
+    // Resource/Floor ID patterns
     const resourcePatterns = [
       /\/floor\/(\d+)/,
       /\/resource\/(\d+)/,
+      /\/resourceGroup\/(\d+)/,
+      /\/floors\/(\d+)/,
     ];
-
     for (const pattern of resourcePatterns) {
       const match = pathname.match(pattern);
       if (match) {
@@ -144,12 +155,12 @@ function extractCredentialsFromPage() {
       }
     }
 
-    // Zone ID
+    // Zone ID patterns
     const zonePatterns = [
       /\/zone\/(\d+)/,
       /\/zoneItem\/(\d+)/,
+      /\/zones\/(\d+)/,
     ];
-
     for (const pattern of zonePatterns) {
       const match = pathname.match(pattern);
       if (match) {
@@ -162,9 +173,8 @@ function extractCredentialsFromPage() {
     console.error('Error parsing URL:', e);
   }
 
-  // Try to get user info from page state or Redux store
+  // Try to get user info from page state
   try {
-    // Check for user data in window objects (common patterns)
     if (window.__PRELOADED_STATE__?.user?.email) {
       credentials.userEmail = window.__PRELOADED_STATE__.user.email;
     }
@@ -176,6 +186,26 @@ function extractCredentialsFromPage() {
   }
 
   return credentials;
+}
+
+/**
+ * Merge credentials from multiple sources
+ * Priority: background (network) > localStorage > fallback
+ */
+function mergeCredentials(backgroundCreds, pageCreds) {
+  return {
+    refreshToken: backgroundCreds?.refreshToken || pageCreds?.refreshToken || null,
+    googleApiKey: backgroundCreds?.googleApiKey || pageCreds?.googleApiKey || KNOWN_GOOGLE_API_KEY,
+    workspaceId: backgroundCreds?.workspaceId || pageCreds?.workspaceId || null,
+    resourceId: backgroundCreds?.resourceId || pageCreds?.resourceId || null,
+    zoneItemId: backgroundCreds?.zoneItemId || pageCreds?.zoneItemId || null,
+    userEmail: pageCreds?.userEmail || null,
+    // Track source for debugging
+    source: {
+      token: backgroundCreds?.refreshToken ? 'network' : (pageCreds?.refreshToken ? 'localStorage' : 'none'),
+      apiKey: backgroundCreds?.googleApiKey ? 'network' : (pageCreds?.googleApiKey ? 'localStorage' : 'fallback'),
+    },
+  };
 }
 
 /**
@@ -200,23 +230,28 @@ async function init() {
       return;
     }
 
-    // Execute script to extract credentials from the page
-    const results = await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      func: extractCredentialsFromPage,
+    // Get credentials from both sources
+    const [backgroundCreds, pageResults] = await Promise.all([
+      getCredentialsFromBackground(),
+      chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: extractCredentialsFromPage,
+      }).catch(err => {
+        console.warn('[Popup] Failed to execute page script:', err);
+        return null;
+      }),
+    ]);
+
+    const pageCreds = pageResults?.[0]?.result || null;
+
+    // Merge credentials from both sources
+    extractedCredentials = mergeCredentials(backgroundCreds, pageCreds);
+
+    console.log('[Popup] Credentials merged:', {
+      hasToken: !!extractedCredentials.refreshToken,
+      hasApiKey: !!extractedCredentials.googleApiKey,
+      source: extractedCredentials.source,
     });
-
-    if (!results || !results[0]?.result) {
-      showError('Could not extract credentials from the page. Please refresh and try again.');
-      return;
-    }
-
-    extractedCredentials = results[0].result;
-
-    // Use known API key if not found
-    if (!extractedCredentials.googleApiKey) {
-      extractedCredentials.googleApiKey = KNOWN_GOOGLE_API_KEY;
-    }
 
     // Check if logged in (must have refresh token)
     if (!extractedCredentials.refreshToken) {

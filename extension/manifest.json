@@ -1,15 +1,18 @@
 {
   "manifest_version": 3,
   "name": "Deskbird MCP Credentials Helper",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Easily extract credentials for the Deskbird MCP Server",
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "storage",
+    "webRequest"
   ],
   "host_permissions": [
     "https://app.deskbird.com/*",
-    "https://*.deskbird.com/*"
+    "https://*.deskbird.com/*",
+    "https://securetoken.googleapis.com/*"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -23,5 +26,8 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
   }
 }

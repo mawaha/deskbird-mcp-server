@@ -2,6 +2,18 @@
 
 A browser extension that makes it easy to extract your Deskbird credentials for the MCP server.
 
+## How It Works
+
+The extension uses a **hybrid approach** for maximum reliability:
+
+1. **Network Interception** (Primary): Captures tokens from actual authentication requests to Google's token API. This works regardless of how Deskbird stores tokens internally.
+
+2. **localStorage Scraping** (Fallback): Reads Firebase auth data from the browser's localStorage if network capture hasn't occurred yet.
+
+3. **URL Parsing**: Extracts workspace/zone IDs from the page URL.
+
+This makes the extension resilient to changes in Deskbird's internal implementation.
+
 ## Installation Guide
 
 ### Step 1: Download the Extension
