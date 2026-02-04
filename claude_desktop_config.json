@@ -1,10 +1,9 @@
 {
   "mcpServers": {
     "deskbird": {
-      "command": "npx",
+      "command": "node",
       "args": [
-        "-y",
-        "@mschilling/deskbird-mcp-server"
+        "/Users/matthew/Projects/deskbird-mcp-server/dist/main.js"
       ],
       "env": {
         "ENABLE_PREVIEW_TOOLS": "false"
