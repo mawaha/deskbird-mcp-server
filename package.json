@@ -1,5 +1,5 @@
 {
-  "name": "@mschilling/deskbird-mcp-server",
+  "name": "@mawaha/deskbird-mcp-server",
   "version": "1.0.10",
   "description": "MCP server for Deskbird desk booking integration.",
   "main": "dist/main.js",
@@ -19,7 +19,8 @@
     "watch": "tsc --watch",
     "test": "node scripts/test-installation.js",
     "test:install": "npm run build && npm run test",
-    "setup": "node scripts/setup.js"
+    "setup": "node scripts/setup.js",
+    "verify": "node scripts/verify.js"
   },
   "keywords": [
     "mcp",
@@ -32,15 +33,15 @@
     "anthropic",
     "claude"
   ],
-  "author": "@mschilling",
+  "author": "@mawaha",
   "license": "ISC",
-  "homepage": "https://github.com/mschilling/deskbird-mcp-server#readme",
+  "homepage": "https://github.com/mawaha/deskbird-mcp-server#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mschilling/deskbird-mcp-server.git"
+    "url": "git+https://github.com/mawaha/deskbird-mcp-server.git"
   },
   "bugs": {
-    "url": "https://github.com/mschilling/deskbird-mcp-server/issues"
+    "url": "https://github.com/mawaha/deskbird-mcp-server/issues"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
