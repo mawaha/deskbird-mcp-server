@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deskbird MCP Credentials</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Deskbird MCP</h1>
+      <p class="subtitle">Credentials Helper</p>
+    </header>
+
+    <div id="not-deskbird" class="message hidden">
+      <div class="message-icon">!</div>
+      <h2>Not on Deskbird</h2>
+      <p>Please navigate to <a href="https://app.deskbird.com" target="_blank">app.deskbird.com</a> and log in first.</p>
+      <button id="open-deskbird" class="btn btn-primary">Open Deskbird</button>
+    </div>
+
+    <div id="not-logged-in" class="message hidden">
+      <div class="message-icon">!</div>
+      <h2>Not Logged In</h2>
+      <p>Please log into your Deskbird account, then click the extension again.</p>
+    </div>
+
+    <div id="loading" class="message">
+      <div class="spinner"></div>
+      <p>Extracting credentials...</p>
+    </div>
+
+    <div id="credentials" class="hidden">
+      <div class="status success">
+        <span class="status-icon">&#10003;</span>
+        <span id="user-email">Logged in</span>
+      </div>
+
+      <div class="credentials-list">
+        <div class="credential-item">
+          <label>REFRESH_TOKEN</label>
+          <div class="credential-value">
+            <input type="text" id="refresh-token" readonly>
+            <button class="btn-copy" data-target="refresh-token" title="Copy">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="credential-item">
+          <label>GOOGLE_API_KEY</label>
+          <div class="credential-value">
+            <input type="text" id="google-api-key" readonly>
+            <button class="btn-copy" data-target="google-api-key" title="Copy">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="credential-item">
+          <label>DESKBIRD_WORKSPACE_ID</label>
+          <div class="credential-value">
+            <input type="text" id="workspace-id" readonly>
+            <button class="btn-copy" data-target="workspace-id" title="Copy">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="credential-item">
+          <label>DESKBIRD_RESOURCE_ID</label>
+          <div class="credential-value">
+            <input type="text" id="resource-id" readonly>
+            <button class="btn-copy" data-target="resource-id" title="Copy">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="credential-item">
+          <label>DESKBIRD_ZONE_ITEM_ID</label>
+          <div class="credential-value">
+            <input type="text" id="zone-item-id" readonly>
+            <button class="btn-copy" data-target="zone-item-id" title="Copy">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="copy-env" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          Copy as .env format
+        </button>
+        <button id="download-env" class="btn btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download .env file
+        </button>
+      </div>
+
+      <div id="copy-feedback" class="copy-feedback hidden">
+        Copied to clipboard!
+      </div>
+
+      <div class="help-text">
+        <p><strong>Next steps:</strong></p>
+        <ol>
+          <li>Click "Copy as .env format" above</li>
+          <li>Paste into your <code>.env</code> file</li>
+          <li>Run <code>npm run verify</code> to test</li>
+        </ol>
+      </div>
+    </div>
+
+    <div id="error" class="message hidden">
+      <div class="message-icon error">!</div>
+      <h2>Error</h2>
+      <p id="error-message">Something went wrong.</p>
+      <button id="retry" class="btn btn-primary">Retry</button>
+    </div>
+
+    <footer>
+      <a href="https://github.com/mawaha/deskbird-mcp-server" target="_blank">Documentation</a>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
