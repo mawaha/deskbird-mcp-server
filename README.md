@@ -48,42 +48,43 @@ npm run setup --local
 
 ## Getting Your Credentials
 
-This server requires credentials from your Deskbird account. Here's how to obtain them:
+This server requires credentials from your Deskbird account. There are two ways to get them:
 
-### REFRESH_TOKEN and GOOGLE_API_KEY
+### Easy Method: Browser Extension (Recommended)
 
-These are used for OAuth authentication with Deskbird:
+We provide a browser extension that automatically extracts all required credentials:
 
-1. **Open Deskbird in your browser** and log in at https://app.deskbird.com
-2. **Open Developer Tools** (F12 or Cmd+Option+I)
-3. **Go to the Network tab** and filter by "token"
-4. **Refresh the page** or perform any action
-5. **Find a request to `securetoken.googleapis.com`**
-6. **In the request payload**, you'll find:
-   - `refresh_token` - Copy this as your `REFRESH_TOKEN`
-7. **In the request URL**, you'll find:
-   - `key=` parameter - Copy this as your `GOOGLE_API_KEY`
+1. **Install the extension** - See [extension/README.md](extension/README.md) for step-by-step instructions
+2. **Log into Deskbird** at https://app.deskbird.com
+3. **Navigate to your floor plan**
+4. **Click the extension icon** and copy your credentials
 
-Alternatively, check the Application tab > Local Storage > `app.deskbird.com` for stored tokens.
+The extension extracts everything automatically - no developer tools needed!
 
-### DESKBIRD_WORKSPACE_ID, DESKBIRD_ZONE_ITEM_ID, DESKBIRD_RESOURCE_ID
+### Manual Method: Browser Developer Tools
 
-These IDs identify your office location:
+If you prefer not to install the extension:
 
-1. **Navigate to your office floor plan** in the Deskbird web app
-2. **Check the URL** - it contains IDs like:
+#### REFRESH_TOKEN and GOOGLE_API_KEY
+
+1. Open Deskbird in your browser and log in at https://app.deskbird.com
+2. Open Developer Tools (F12 or Cmd+Option+I)
+3. Go to the **Network tab** and filter by "token"
+4. Refresh the page or perform any action
+5. Find a request to `securetoken.googleapis.com`
+6. In the request payload, copy the `refresh_token` value
+7. In the request URL, copy the `key=` parameter value
+
+#### DESKBIRD_WORKSPACE_ID, DESKBIRD_ZONE_ITEM_ID, DESKBIRD_RESOURCE_ID
+
+1. Navigate to your office floor plan in the Deskbird web app
+2. Check the URL - it contains IDs like:
    ```
    https://app.deskbird.com/office/123/floor/456/zone/789
    ```
    - `123` = Workspace ID
    - `456` = Floor/Resource ID
    - `789` = Zone Item ID
-
-3. **Alternatively**, use the MCP inspector after setting up authentication:
-   ```bash
-   npm run inspector
-   ```
-   Then call `deskbird_get_user_info` to see your workspace details.
 
 ### Verifying Your Credentials
 
