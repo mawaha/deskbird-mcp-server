@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "deskbird": {
+      "command": "node",
+      "args": [
+        "/Users/matthew/Projects/deskbird-mcp-server/dist/main.js"
+      ],
+      "env": {
+        "ENABLE_PREVIEW_TOOLS": "false"
+      }
+    }
+  }
+}
